@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, ActivatedRouteSnapshot, UrlTree } from '@angular/router';
 import { of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, map } from 'rxjs/operators';
 import * as semver from 'semver';
 import { ChaosService } from '../services/chaos.service';
 import { LoggerService } from '../services/logger.service';
@@ -64,26 +64,29 @@ export const mfePolicyGuard: CanActivateFn = (route, state) => {
     }
 
     // 5. Simulate async checks (perf, a11y) with chaos latency
-    return of(true).pipe(delay(chaos.state().networkLatency)).toPromise().then(() => {
-        // (Chaos) Simulate other failures after latency
-        if (chaos.state().forcePerfBudgetFail) {
-            return traceAndHandleFallback('PerfBudgetFail', `(Chaos) MFE ${mfeId} failed performance budget.`);
-        }
-        if (chaos.state().forceA11yFail) {
-            return traceAndHandleFallback('A11yFail', `(Chaos) MFE ${mfeId} failed accessibility check.`);
-        }
+    return of(true).pipe(
+        delay(chaos.state().networkLatency),
+        map(() => {
+            // (Chaos) Simulate other failures after latency
+            if (chaos.state().forcePerfBudgetFail) {
+                return traceAndHandleFallback('PerfBudgetFail', `(Chaos) MFE ${mfeId} failed performance budget.`);
+            }
+            if (chaos.state().forceA11yFail) {
+                return traceAndHandleFallback('A11yFail', `(Chaos) MFE ${mfeId} failed accessibility check.`);
+            }
 
-        // All checks passed
-        tracer.trace({
-            source: 'PolicyGuard',
-            target: 'Router',
-            type: 'Result',
-            status: 'SUCCESS',
-            payload: { guard: 'PolicyGuard', result: 'pass', mfe: mfeId }
-        });
-        logger.success('PolicyGuard', `All policies passed for ${mfeId}. Allowing activation.`);
-        return true;
-    });
+            // All checks passed
+            tracer.trace({
+                source: 'PolicyGuard',
+                target: 'Router',
+                type: 'Result',
+                status: 'SUCCESS',
+                payload: { guard: 'PolicyGuard', result: 'pass', mfe: mfeId }
+            });
+            logger.success('PolicyGuard', `All policies passed for ${mfeId}. Allowing activation.`);
+            return true;
+        })
+    );
 
     // --- Helper Functions ---
 
