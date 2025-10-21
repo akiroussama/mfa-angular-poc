@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { LoggerService } from './logger.service';
 
 export interface User {
@@ -18,7 +18,13 @@ export interface User {
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private logger = new LoggerService(); // Cannot inject here due to DI cycle with EventBus->Logger
+  // FIX: Replaced `new LoggerService()` with `inject(LoggerService)`.
+  // Manually instantiating a service with `new` is an anti-pattern that breaks
+  // Angular's Dependency Injection. The original code failed because the
+  // LoggerService's constructor tried to `inject(EventBusService)` outside of an
+  // injection context, causing a fatal error on startup.
+  // The previous comment about a DI cycle was incorrect.
+  private logger = inject(LoggerService);
   currentUser = signal<User | null>(null);
 
   login(user: User) {
