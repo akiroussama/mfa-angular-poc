@@ -1,0 +1,73 @@
+<div>
+  <div class="flex justify-between items-center mb-4">
+    <h4 class="text-lg font-semibold">Live Architectural Tracer</h4>
+    <button (click)="tracerService.clear()" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm flex items-center space-x-1">
+      <span class="material-symbols-outlined text-base">delete_sweep</span>
+      <span>Clear</span>
+    </button>
+  </div>
+  <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+    <div class="text-center font-mono text-sm mb-4 h-5">
+        <span class="transition-opacity duration-300" [class.opacity-100]="lastEventMessage()">{{ lastEventMessage() || 'Interact with the app to see the trace...' }}</span>
+    </div>
+    <svg width="100%" height="250" viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg">
+      <!-- Define markers -->
+      <defs>
+        <marker id="arrowhead" markerWidth="5" markerHeight="3.5" refX="0" refY="1.75" orient="auto">
+          <polygon points="0 0, 5 1.75, 0 3.5" fill="#6b7280" />
+        </marker>
+         <marker id="arrowhead-active" markerWidth="5" markerHeight="3.5" refX="0" refY="1.75" orient="auto">
+          <polygon points="0 0, 5 1.75, 0 3.5" fill="#34d399" />
+        </marker>
+      </defs>
+
+      <!-- Links -->
+      <g class="links">
+        <path id="link-UserAction-Router" d="M 60 50 L 140 50" class="link" [class.link-active]="linkStates()['UserAction-Router'] === 'active'" />
+        <path id="link-Router-AuthGuard" d="M 190 50 L 265 50" class="link" [class.link-active]="linkStates()['Router-AuthGuard'] === 'active'" />
+        <path id="link-AuthGuard-Router" d="M 300 70 Q 245 80 190 70" class="link" [class.link-active]="linkStates()['AuthGuard-Router'] === 'active'" />
+        <path id="link-Router-PolicyGuard" d="M 190 70 L 265 150" class="link" [class.link-active]="linkStates()['Router-PolicyGuard'] === 'active'" />
+        <path id="link-PolicyGuard-Router" d="M 300 170 Q 245 180 190 90" class="link" [class.link-active]="linkStates()['PolicyGuard-Router'] === 'active'" />
+        <path id="link-Router-paiements_stable" d="M 190 90 L 440 190" class="link" [class.link-active]="linkStates()['Router-paiements_stable'] === 'active' || linkStates()['PolicyGuard-paiements_stable'] === 'active'" />
+        <path id="link-Router-paiements_canary" d="M 190 90 L 590 190" class="link" [class.link-active]="linkStates()['Router-paiements_canary'] === 'active'" />
+        <path id="link-Router-allocataire_stable" d="M 190 90 L 290 190" class="link" [class.link-active]="linkStates()['Router-allocataire_stable'] === 'active'" />
+        <path id="link-paiements_canary-EventBus" d="M 625 170 L 495 110" class="link" [class.link-active]="linkStates()['paiements_canary-EventBus'] === 'active'"/>
+        <path id="link-paiements_stable-EventBus" d="M 475 170 L 475 110" class="link" [class.link-active]="linkStates()['paiements_stable-EventBus'] === 'active'" />
+        <path id="link-allocataire_stable-EventBus" d="M 325 170 L 455 110" class="link" [class.link-active]="linkStates()['allocataire_stable-EventBus'] === 'active'"/>
+      </g>
+
+      <!-- Nodes -->
+      <g class="nodes">
+        <!-- Tier 1 -->
+        <g id="node-UserAction" class="node" [class.node-active]="nodeStates()['UserAction'] === 'active'">
+            <rect x="10" y="30" width="100" height="40" rx="5"></rect><text x="60" y="55">User Action</text>
+        </g>
+        <g id="node-Router" class="node" [class.node-active]="nodeStates()['Router'] === 'active'" [class.node-success]="nodeStates()['Router'] === 'success'" [class.node-error]="nodeStates()['Router'] === 'error'">
+            <rect x="140" y="30" width="100" height="60" rx="5"></rect><text x="190" y="65">Router</text>
+        </g>
+
+        <!-- Tier 2 (Guards & Bus) -->
+        <g id="node-AuthGuard" class="node" [class.node-active]="nodeStates()['AuthGuard'] === 'active'" [class.node-success]="nodeStates()['AuthGuard'] === 'success'" [class.node-error]="nodeStates()['AuthGuard'] === 'error'">
+            <rect x="265" y="30" width="100" height="40" rx="20"></rect><text x="315" y="55">Auth Guard</text>
+        </g>
+        <g id="node-PolicyGuard" class="node" [class.node-active]="nodeStates()['PolicyGuard'] === 'active'" [class.node-success]="nodeStates()['PolicyGuard'] === 'success'" [class.node-error]="nodeStates()['PolicyGuard'] === 'error'">
+            <rect x="265" y="150" width="100" height="40" rx="20"></rect><text x="315" y="175">Policy Guard</text>
+        </g>
+         <g id="node-EventBus" class="node" [class.node-active]="nodeStates()['EventBus'] === 'active'">
+            <rect x="425" y="70" width="100" height="40" rx="5"></rect><text x="475" y="95">Event Bus</text>
+        </g>
+
+        <!-- Tier 3 (MFEs) -->
+        <g id="node-allocataire_stable" class="node" [class.node-active]="nodeStates()['allocataire_stable'] === 'active'" [class.node-success]="nodeStates()['allocataire_stable'] === 'success'">
+            <rect x="275" y="190" width="150" height="40" rx="5"></rect><text x="350" y="215">Allocataire (Stable)</text>
+        </g>
+        <g id="node-paiements_stable" class="node" [class.node-active]="nodeStates()['paiements_stable'] === 'active'" [class.node-success]="nodeStates()['paiements_stable'] === 'success'">
+            <rect x="425" y="190" width="150" height="40" rx="5"></rect><text x="500" y="215">Paiements (Stable)</text>
+        </g>
+        <g id="node-paiements_canary" class="node" [class.node-active]="nodeStates()['paiements_canary'] === 'active'" [class.node-success]="nodeStates()['paiements_canary'] === 'success'">
+            <rect x="575" y="190" width="150" height="40" rx="5"></rect><text x="650" y="215">Paiements (Canary)</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+</div>

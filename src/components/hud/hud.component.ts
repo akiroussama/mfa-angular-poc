@@ -1,16 +1,18 @@
-
 import { Component, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LoggerService } from '../../services/logger.service';
 import { ChaosService, ChaosState } from '../../services/chaos.service';
 import { MfeLoaderService } from '../../services/mfe-loader.service';
 import { ThemeService } from '../../services/theme.service';
+import { TracerComponent } from './tracer/tracer.component'; // Import the new TracerComponent
+
+type HudTab = 'journal' | 'chaos' | 'policies' | 'dependencies' | 'tracer';
 
 @Component({
   selector: 'app-hud',
   templateUrl: './hud.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, TracerComponent], // Add TracerComponent to imports
 })
 export class HudComponent {
   logger = inject(LoggerService);
@@ -18,16 +20,22 @@ export class HudComponent {
   mfeLoader = inject(MfeLoaderService);
   themeService = inject(ThemeService);
 
-  activeTab = signal<'journal' | 'chaos' | 'policies' | 'dependencies'>('journal');
-  isExpanded = signal(true); // Start expanded for better visibility
+  activeTab = signal<HudTab>('tracer'); // Default to the new Tracer tab
+  isExpanded = signal(true); 
 
   chaosState = this.chaosService.state;
   logs = this.logger.logs;
   manifest = this.mfeLoader.getManifest();
   
-  // NOTE: Governance mode is now just a visual toggle in the HUD.
-  // The actual enforcement would happen in route guards in a real app.
   governanceMode = signal<'strict' | 'soft'>('strict');
+  
+  tabs: {id: HudTab, label: string}[] = [
+      {id: 'tracer', label: 'Tracer'},
+      {id: 'journal', label: 'Journal'},
+      {id: 'chaos', label: 'Chaos'},
+      {id: 'policies', label: 'Policies'},
+      {id: 'dependencies', label: 'Dependencies'}
+  ];
 
   chaosToggles: { key: keyof Omit<ChaosState, 'networkLatency'>, label: string }[] = [
     { key: 'forceContractMismatch', label: 'Force Contract Mismatch' },
@@ -67,7 +75,7 @@ export class HudComponent {
   });
 
 
-  selectTab(tab: 'journal' | 'chaos' | 'policies' | 'dependencies') {
+  selectTab(tab: HudTab) {
     this.activeTab.set(tab);
     if(!this.isExpanded()) {
         this.isExpanded.set(true);

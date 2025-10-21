@@ -2,36 +2,34 @@ import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { MfeLoaderService } from './services/mfe-loader.service';
 import { inject } from '@angular/core';
+import { mfePolicyGuard } from './guards/mfe-policy.guard';
 
 /**
- * ARCHITECTURAL NOTE: Dynamic MFE Routing
- *
- * This routing configuration is the heart of the new, more advanced architecture.
- * - Lazy Loading: Each MFE component is loaded on demand using `loadComponent`, which is essential for performance in a large-scale application.
- * - Channel-Aware Routes: We define explicit routes for `stable` and `canary` channels. This provides clear, bookmarkable URLs and simplifies the loading logic.
- * - Centralized Guarding: The `authGuard` is applied centrally here, ensuring that security policies are enforced consistently across all business domains (MFEs).
- * - Fallback and Default Routes: A default redirect to a stable channel ensures a consistent user experience.
+ * ARCHITECTURAL NOTE: Dynamic MFE Routing with Multi-layered Guarding
+ * This routing configuration now demonstrates a more sophisticated, production-like
+ * security and governance model.
+ * - Multi-layered Guards: The `canActivate` array now includes both `authGuard` and
+ *   the new `mfePolicyGuard`. This ensures that a route is first checked for user
+ *   authentication, and only then is the MFE's compliance checked. This is a
+ *   clean separation of security and governance concerns.
  */
 export const routes: Routes = [
   {
     path: 'allocataire',
-    canActivate: [authGuard],
+    canActivate: [authGuard, mfePolicyGuard], // Added mfePolicyGuard
     children: [
       {
         path: 'stable',
         loadComponent: () => import('./remotes/allocataire-stable.component').then(m => m.AllocataireStableComponent)
       },
-      // Allocataire has no canary, so we can redirect or show a "not available" component.
-      // For simplicity, we redirect to stable.
       { path: 'canary', redirectTo: 'stable', pathMatch: 'full' },
       { path: '', redirectTo: 'stable', pathMatch: 'full' }
     ]
   },
   {
     path: 'paiements',
-    canActivate: [authGuard],
+    canActivate: [authGuard, mfePolicyGuard], // Added mfePolicyGuard
     resolve: {
-      // Example of a resolver to check if canary is available from the manifest
       canaryAvailable: () => {
         const manifest = inject(MfeLoaderService).getManifest();
         return !!manifest['paiements']?.canary;
@@ -52,10 +50,10 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'allocataire' // Default route for the application
+    redirectTo: 'allocataire' 
   },
   {
     path: '**',
-    redirectTo: 'allocataire' // Wildcard route to handle invalid URLs
+    redirectTo: 'allocataire' 
   }
 ];

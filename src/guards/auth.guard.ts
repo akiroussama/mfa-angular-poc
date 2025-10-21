@@ -2,29 +2,47 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { LoggerService } from '../services/logger.service';
+import { TracerService } from '../services/tracer.service';
 
 /**
  * ARCHITECTURAL NOTE: Authentication Guard
- *
- * This functional route guard is a transverse security component. It ensures
- * that no MFE can be accessed without a valid user session.
- *
- * - Centralized Logic: Security rules are defined in one place, not scattered across MFEs.
- * - Decoupling: MFEs don't need to know about authentication; they can assume if they are loaded, the user is authenticated.
- * - Non-Invasive: It protects routes without modifying the MFE components themselves.
+ * This functional route guard is a transverse security component.
  */
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
-  // FIX: Explicitly typed the injected Router to resolve potential type inference issues.
   const router: Router = inject(Router);
   const logger = inject(LoggerService);
+  const tracer = inject(TracerService);
+
+  tracer.trace({
+      source: 'Router',
+      target: 'AuthGuard',
+      type: 'Check',
+      status: 'SUCCESS',
+      payload: { guard: 'AuthGuard', status: 'start' }
+  });
 
   if (authService.currentUser()) {
+    tracer.trace({
+      source: 'AuthGuard',
+      target: 'Router',
+      type: 'Result',
+      status: 'SUCCESS',
+      payload: { guard: 'AuthGuard', result: 'pass' }
+    });
     return true;
   }
 
   // Redirect to the home page (which will show the login prompt)
   logger.warn('AuthGuard', `Blocked unauthenticated access to ${state.url}`);
-  router.navigate(['/']);
-  return false;
+  tracer.trace({
+      source: 'AuthGuard',
+      target: 'Router',
+      type: 'Result',
+      status: 'ERROR',
+      payload: { guard: 'AuthGuard', result: 'fail', reason: 'Not authenticated' }
+  });
+  
+  // FIX: Return a UrlTree instead of navigating imperatively to avoid circular dependencies.
+  return router.createUrlTree(['/']);
 };

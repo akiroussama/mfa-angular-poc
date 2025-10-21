@@ -1,0 +1,70 @@
+:host {
+  display: block;
+}
+
+.node rect {
+  fill: #4a5568; /* gray-700 */
+  stroke: #718096; /* gray-500 */
+  stroke-width: 1;
+  transition: all 0.3s ease-in-out;
+}
+
+.node text {
+  fill: #e2e8f0; /* gray-300 */
+  font-size: 10px;
+  text-anchor: middle;
+  pointer-events: none;
+  font-family: 'Source Sans 3', sans-serif;
+  font-weight: 600;
+}
+
+.node.node-active rect {
+  fill: #3b82f6; /* blue-500 */
+  stroke: #60a5fa; /* blue-400 */
+  animation: pulse-node 1.5s infinite;
+}
+
+.node.node-success rect {
+  fill: #10b981; /* green-500 */
+  stroke: #34d399; /* green-400 */
+}
+
+.node.node-error rect {
+  fill: #ef4444; /* red-500 */
+  stroke: #f87171; /* red-400 */
+}
+
+.link {
+  fill: none;
+  stroke: #4a5568; /* gray-700 */
+  stroke-width: 1.5;
+  marker-end: url(#arrowhead);
+  transition: all 0.3s ease-in-out;
+}
+
+.link.link-active {
+  stroke: #34d399; /* green-400 */
+  stroke-dasharray: 4;
+  animation: dash 1.5s linear infinite;
+  marker-end: url(#arrowhead-active);
+}
+
+@keyframes pulse-node {
+  0%, 100% {
+    transform: scale(1);
+    transform-origin: center;
+  }
+  50% {
+    transform: scale(1.03);
+    transform-origin: center;
+  }
+}
+
+@keyframes dash {
+  from {
+    stroke-dashoffset: 8;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
