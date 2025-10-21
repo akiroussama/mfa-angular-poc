@@ -1,0 +1,41 @@
+
+<div [class.high-contrast]="themeService.isHighContrast()" [class.large-text]="themeService.isLargeText()" class="min-h-screen transition-colors duration-300 bg-gray-50 text-gray-900 dark:bg-cnaf-gray dark:text-gray-100">
+  <!-- Header -->
+  <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center sticky top-0 z-40">
+    <div class="flex items-center space-x-4">
+      <img src="https://www.cnaf.fr/sites/default/files/cnaf/logo-generique-cnaf-2021.png" alt="CNAF Logo" class="h-10">
+      <div>
+        <h1 class="text-xl font-bold text-cnaf-blue dark:text-white">Bureau Virtuel de l'Agent</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Kernel C3 Governance Demonstrator</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4">
+      <button (click)="exportAuditReport()" class="flex items-center space-x-2 bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-md text-sm font-semibold hover:bg-gray-300 dark:hover:bg-gray-600">
+        <span class="material-symbols-outlined text-base">download_for_offline</span>
+        <span>Export Audit PDF</span>
+      </button>
+      <button (click)="toggleHud()" class="flex items-center space-x-2 bg-cnaf-blue text-white px-3 py-2 rounded-md text-sm font-semibold hover:bg-blue-700">
+        <span class="material-symbols-outlined text-base">space_dashboard</span>
+        <span>{{ isHudVisible() ? 'Hide' : 'Show' }} HUD</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-2xl font-semibold mb-6 text-gray-700 dark:text-gray-200">Applications Métier</h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Remote Loader Host -->
+        <ng-template mfeHost></ng-template>
+      </div>
+
+    </div>
+  </main>
+  
+  <!-- Governance HUD -->
+  @if(isHudVisible()) {
+    <app-hud class="fixed bottom-0 right-0 left-0 z-50"></app-hud>
+  }
+</div>

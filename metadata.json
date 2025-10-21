@@ -1,0 +1,5 @@
+{
+  "name": "Kernel C3: Canary, Contracts, Compliance",
+  "description": "An architectural demonstrator for Micro-Frontend (MFE) governance in a public sector context. It showcases canary deployment management, inter-MFE contract enforcement, and compliance checks for security, accessibility, and performance, all managed through an integrated Heads-Up Display (HUD).",
+  "requestFramePermissions": []
+}

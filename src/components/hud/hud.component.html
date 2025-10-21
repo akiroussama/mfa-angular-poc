@@ -1,0 +1,126 @@
+
+<div class="bg-gray-800 text-gray-200 shadow-2xl rounded-t-lg transition-all duration-300 ease-in-out" [class.max-h-12]="!isExpanded()" [class.max-h-[60vh]]="isExpanded()">
+  <div class="flex justify-between items-center p-2 border-b border-gray-700 cursor-pointer" (click)="toggleExpansion()">
+    <div class="flex items-center space-x-3">
+      <span class="material-symbols-outlined text-cnaf-blue">space_dashboard</span>
+      <h3 class="font-bold text-lg">Kernel C3 Governance HUD</h3>
+    </div>
+    <div class="flex items-center space-x-4">
+        @for (tab of ['journal', 'chaos', 'policies', 'dependencies']; track tab) {
+          <button (click)="$event.stopPropagation(); selectTab(tab)" class="px-3 py-1 text-sm rounded transition-colors" [class.bg-cnaf-blue]="activeTab() === tab" [class.bg-gray-700]="activeTab() !== tab" [class.hover:bg-gray-600]="activeTab() !== tab">
+            {{ tab | titlecase }}
+          </button>
+        }
+        <span class="material-symbols-outlined">{{ isExpanded() ? 'expand_more' : 'expand_less' }}</span>
+    </div>
+  </div>
+
+  <div class="overflow-y-auto h-[calc(60vh-3rem)] p-4" [class.hidden]="!isExpanded()">
+    <!-- Journal Tab -->
+    @if(activeTab() === 'journal') {
+      <div class="font-mono text-sm space-y-2">
+        @for (log of logs(); track $index) {
+          <div class="flex items-start">
+            <span class="text-gray-500 mr-2">{{ log.timestamp | date:'HH:mm:ss' }}</span>
+            <span class="font-bold w-24" [class.text-green-400]="log.level === 'SUCCESS'" [class.text-yellow-400]="log.level === 'WARN'" [class.text-red-400]="log.level === 'ERROR'" [class.text-blue-400]="log.level === 'INFO'">[{{ log.source }}]</span>
+            <span class="flex-1">{{ log.message }}</span>
+          </div>
+        } @empty {
+          <p class="text-gray-500">Log is empty. Interact with the app to see events.</p>
+        }
+      </div>
+    }
+
+    <!-- Chaos Panel Tab -->
+    @if(activeTab() === 'chaos') {
+      <div>
+        <div class="flex justify-between items-center mb-4">
+            <h4 class="text-lg font-semibold">Chaos Engineering Panel</h4>
+            <button (click)="chaosService.reset()" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm">Reset All Chaos</button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="bg-gray-700 p-3 rounded">
+                <label class="font-semibold block mb-2">Network Latency</label>
+                <select [value]="chaosState().networkLatency" (change)="updateNetworkLatency($event)" class="w-full bg-gray-800 border border-gray-600 rounded p-1">
+                    <option value="0">None</option>
+                    <option value="500">500ms</option>
+                    <option value="3000">3000ms</option>
+                </select>
+            </div>
+             <!-- FIX: Iterate over the strongly-typed chaosToggles array for type safety -->
+             @for (chaos of chaosToggles; track chaos.key) {
+                <div class="bg-gray-700 p-3 rounded flex items-center justify-between">
+                    <label class="font-semibold">{{ chaos.label }}</label>
+                    <input type="checkbox" [checked]="chaosState()[chaos.key]" (change)="updateChaosToggle(chaos.key, $event)" class="h-5 w-5 rounded">
+                </div>
+            }
+        </div>
+      </div>
+    }
+
+    <!-- Policies Tab -->
+    @if(activeTab() === 'policies') {
+        <div>
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-semibold">Governance Policies</h4>
+                <div class="flex items-center space-x-2">
+                    <span>Mode:</span>
+                    <button (click)="toggleGovernanceMode()" class="px-4 py-1 rounded font-bold" [class.bg-red-600]="governanceMode() === 'strict'" [class.bg-yellow-500]="governanceMode() === 'soft'">{{ governanceMode() | uppercase }}</button>
+                </div>
+            </div>
+            <div class="space-y-4">
+                @for (remote of mfeLoader.getAvailableRemotes(); track remote) {
+                    <div class="bg-gray-700 p-4 rounded">
+                        <h5 class="text-md font-bold text-cnaf-blue mb-2">{{ remote | titlecase }} Policies</h5>
+                        @for (channel of ['stable', 'canary']; track channel) {
+                            @if(manifest[remote][channel]) {
+                                @let entry = manifest[remote][channel];
+                                <div class="border-t border-gray-600 mt-2 pt-2">
+                                    <h6 class="font-semibold">{{ channel | titlecase }} (v{{ entry.version }})</h6>
+                                    <ul class="text-sm list-disc list-inside pl-2 mt-1 space-y-1">
+                                        <li>Perf Budget: LCP &lt; {{ entry.policies.perfBudget.lcp }}ms</li>
+                                        <li>A11y: {{ entry.policies.a11y.mode === 'strict' ? 'No critical violations' : 'Warnings allowed' }}</li>
+                                        <li>Security: Allowed origins: {{ entry.policies.security.httpAllowList.join(', ') }}</li>
+                                    </ul>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Dependencies Tab -->
+    @if(activeTab() === 'dependencies') {
+        <div>
+            <h4 class="text-lg font-semibold mb-4">Shared Scope Inspector (Simulated)</h4>
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th class="p-2">Package</th>
+                        <th class="p-2">Resolved Versions</th>
+                        <th class="p-2">Provided By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (dep of allDependencies(); track dep[0]) {
+                        <tr class="border-b border-gray-700">
+                            <td class="p-2 font-semibold">{{ dep[0] }}</td>
+                            <td class="p-2">
+                                @if(dep[1].versions.size > 1) {
+                                    <span class="px-2 py-1 bg-red-600 rounded-full text-xs font-bold">DUPLICATION RISK</span>
+                                }
+                                @for(version of Array.from(dep[1].versions); track version) {
+                                    <span class="mr-2 px-2 py-0.5 bg-gray-600 rounded">{{ version }}</span>
+                                }
+                            </td>
+                            <td class="p-2">{{ dep[1].providedBy.join(', ') }}</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+  </div>
+</div>

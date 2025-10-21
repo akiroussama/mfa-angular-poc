@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Kernel C3</title>
+  <base href="/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'cnaf-blue': '#0053b3',
+            'cnaf-gray': '#4a4a4a',
+          },
+          animation: {
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    body { font-family: 'Source Sans 3', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    /* High Contrast Mode */
+    .high-contrast {
+      --bg-color: #000;
+      --text-color: #fff;
+      --primary-color: #ffff00;
+      --border-color: #fff;
+      --card-bg: #1a1a1a;
+    }
+    .high-contrast [class*="bg-"] { background-color: var(--card-bg, #111); }
+    .high-contrast [class*="text-"] { color: var(--text-color); }
+    .high-contrast button { background-color: var(--primary-color) !important; color: #000 !important; }
+    .high-contrast [class*="border-"] { border-color: var(--border-color); }
+
+    /* Larger Text Mode */
+    .large-text { font-size: 125%; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.8.4/axe.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "rxjs": "https://aistudiocdn.com/rxjs@^7.8.2?conditions=es2015",
+    "rxjs/operators": "https://aistudiocdn.com/rxjs@^7.8.2/operators?conditions=es2015",
+    "rxjs/ajax": "https://aistudiocdn.com/rxjs@^7.8.2/ajax?conditions=es2015",
+    "rxjs/webSocket": "https://aistudiocdn.com/rxjs@^7.8.2/webSocket?conditions=es2015",
+    "rxjs/testing": "https://aistudiocdn.com/rxjs@^7.8.2/testing?conditions=es2015",
+    "rxjs/fetch": "https://aistudiocdn.com/rxjs@^7.8.2/fetch?conditions=es2015",
+    "@angular/common": "https://next.esm.sh/@angular/common@^20.3.6?external=rxjs",
+    "@angular/common/http": "https://next.esm.sh/@angular/common@^20.3.6/http?external=rxjs",
+    "@angular/platform-browser": "https://next.esm.sh/@angular/platform-browser@^20.3.6?external=rxjs",
+    "@angular/compiler": "https://next.esm.sh/@angular/compiler@^20.3.6?external=rxjs",
+    "@angular/core": "https://next.esm.sh/@angular/core@^20.3.6?external=rxjs",
+    "zone.js": "https://next.esm.sh/zone.js@^0.15.1?external=rxjs",
+    "semver": "https://next.esm.sh/semver@^7.7.3?external=rxjs"
+  }
+}
+</script>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased">
+  <app-root></app-root>
+</body>
+</html>
