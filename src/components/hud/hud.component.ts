@@ -19,15 +19,16 @@ export class HudComponent {
   themeService = inject(ThemeService);
 
   activeTab = signal<'journal' | 'chaos' | 'policies' | 'dependencies'>('journal');
-  isExpanded = signal(false);
+  isExpanded = signal(true); // Start expanded for better visibility
 
   chaosState = this.chaosService.state;
   logs = this.logger.logs;
   manifest = this.mfeLoader.getManifest();
   
-  governanceMode = computed(() => this.mfeLoader.getGovernanceMode());
+  // NOTE: Governance mode is now just a visual toggle in the HUD.
+  // The actual enforcement would happen in route guards in a real app.
+  governanceMode = signal<'strict' | 'soft'>('strict');
 
-  // FIX: Created a strongly-typed array for chaos toggles to improve type safety in the template.
   chaosToggles: { key: keyof Omit<ChaosState, 'networkLatency'>, label: string }[] = [
     { key: 'forceContractMismatch', label: 'Force Contract Mismatch' },
     { key: 'forcePerfBudgetFail', label: 'Force Perf Budget Fail' },
@@ -37,9 +38,10 @@ export class HudComponent {
 
   allDependencies = computed(() => {
     const deps = new Map<string, { providedBy: string[], versions: Set<string>}>();
+    const componentRegistry = this.mfeLoader.getComponentRegistry();
+
     Object.entries(this.manifest).forEach(([remoteName, remote]) => {
-      // FIX: Read contract from static property, do not instantiate component.
-      const stableComponentType = this.mfeLoader['componentRegistry'][`${remoteName}@stable`];
+      const stableComponentType = componentRegistry[`${remoteName}@stable`];
       if (stableComponentType && (stableComponentType as any).contract) {
         const stableContract = (stableComponentType as any).contract;
         Object.entries(stableContract.dependencies).forEach(([pkg, version]) => {
@@ -50,7 +52,7 @@ export class HudComponent {
       }
       
       if (remote.canary) {
-        const canaryComponentType = this.mfeLoader['componentRegistry'][`${remoteName}@canary`];
+        const canaryComponentType = componentRegistry[`${remoteName}@canary`];
         if (canaryComponentType && (canaryComponentType as any).contract) {
             const canaryContract = (canaryComponentType as any).contract;
             Object.entries(canaryContract.dependencies).forEach(([pkg, version]) => {
@@ -77,7 +79,8 @@ export class HudComponent {
   }
 
   toggleGovernanceMode() {
-    this.mfeLoader.setGovernanceMode(this.governanceMode() === 'strict' ? 'soft' : 'strict');
+    this.governanceMode.update(m => m === 'strict' ? 'soft' : 'strict');
+    this.logger.log('KernelC3', `(Simulated) Governance mode switched to ${this.governanceMode()}`);
   }
 
   updateNetworkLatency(event: Event) {

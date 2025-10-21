@@ -1,12 +1,14 @@
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { MfeContract } from '../contracts/mfe.contracts';
 import { MfeBaseComponent } from './mfe.model';
+import { CnafButtonComponent } from '../shared-ui/cnaf-button/cnaf-button.component';
+import { EventBusService } from '../services/event-bus.service';
 
 @Component({
   selector: 'app-paiements-stable',
   standalone: true,
-  imports: [MfeBaseComponent],
+  imports: [MfeBaseComponent, CnafButtonComponent],
   template: `
     <app-mfe-base
       title="Gestion des Paiements"
@@ -17,14 +19,16 @@ import { MfeBaseComponent } from './mfe.model';
         <p class="text-gray-600 dark:text-gray-300">
           Visualisation de l'historique des paiements et des prochains versements. Version stable et fiable.
         </p>
-        <button (click)="callApi('api.cnaf.fr/paiements')" class="mt-4 bg-cnaf-blue text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+        <app-cnaf-button (click)="viewHistory()" class="mt-4">
           Voir Historique
-        </button>
+        </app-cnaf-button>
     </app-mfe-base>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaiementsStableComponent {
+  private eventBus = inject(EventBusService);
+
   // FIX: Changed to static to allow inspection without instantiation.
   public static contract: MfeContract = {
     version: '2.1.0',
@@ -35,4 +39,12 @@ export class PaiementsStableComponent {
         'd3': '7.9.0'
     }
   };
+
+  viewHistory() {
+     this.eventBus.publish({
+      source: 'Paiements',
+      type: 'paiement.effectue@1',
+      payload: { transactionId: 'TX9876', amount: 150.75 }
+    });
+  }
 }

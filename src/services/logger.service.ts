@@ -1,5 +1,6 @@
 
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject, effect } from '@angular/core';
+import { EventBusService } from './event-bus.service';
 
 export interface LogEntry {
   timestamp: Date;
@@ -11,6 +12,17 @@ export interface LogEntry {
 @Injectable({ providedIn: 'root' })
 export class LoggerService {
   logs = signal<LogEntry[]>([]);
+  private eventBus = inject(EventBusService);
+
+  constructor() {
+    // Automatically log events from the event bus
+    effect(() => {
+      const event = this.eventBus.lastEvent();
+      if (event) {
+        this.log(event.source, `EVENT [${event.type}]: ${JSON.stringify(event.payload)}`);
+      }
+    });
+  }
 
   log(source: string, message: string) {
     this.addLog('INFO', source, message);

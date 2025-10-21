@@ -1,62 +1,50 @@
-
-import { Component, ChangeDetectionStrategy, signal, inject, ViewContainerRef, AfterViewInit, ComponentRef, viewChild } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterLink, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+
 import { HudComponent } from './components/hud/hud.component';
-import { MfeHostDirective } from './components/mfe-host.directive';
-import { MfeLoaderService, MfeState } from './services/mfe-loader.service';
 import { ThemeService } from './services/theme.service';
 import { ReportService } from './services/report.service';
-import { Mfe, MfeComponent } from './contracts/mfe.contracts';
-import { LoggerService } from './services/logger.service';
+import { AuthService } from './services/auth.service';
+import { MfeLoaderService } from './services/mfe-loader.service';
+import { toSignal } from '@angular/core/rxjs/interop';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, HudComponent, MfeHostDirective],
+  imports: [CommonModule, RouterOutlet, RouterLink, HudComponent],
 })
-export class AppComponent implements AfterViewInit {
-  private mfeLoader = inject(MfeLoaderService);
+export class AppComponent {
+  // FIX: Explicitly typed the injected Router to resolve potential type inference issues.
+  private router: Router = inject(Router);
   themeService = inject(ThemeService);
   reportService = inject(ReportService);
-  logger = inject(LoggerService);
-
-  mfeHost = viewChild.required(MfeHostDirective);
-
-  mfeRegistry: { [key: string]: MfeState } = {
-    'allocataire': { channel: 'stable', loadedComponent: null },
-    'paiements': { channel: 'stable', loadedComponent: null }
-  };
-
-  availableRemotes = this.mfeLoader.getAvailableRemotes();
+  authService = inject(AuthService);
+  mfeLoader = inject(MfeLoaderService);
   
   isHudVisible = signal(true);
   
-  ngAfterViewInit() {
-    // Load initial stable remotes
-    this.loadRemote('allocataire', 'stable');
-    this.loadRemote('paiements', 'stable');
-  }
+  // Get remote info from the manifest for building the navigation
+  remotes = computed(() => {
+    const manifest = this.mfeLoader.getManifest();
+    return Object.keys(manifest).map(key => ({
+      name: key,
+      canaryAvailable: !!manifest[key].canary,
+    }));
+  });
 
-  loadRemote(remoteName: string, channel: 'stable' | 'canary') {
-    this.mfeRegistry[remoteName].channel = channel;
-    const viewContainerRef = this.mfeHost().viewContainerRef;
+  // Observe the current route to update the UI (e.g., active links)
+  currentRoute = toSignal(
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd)),
+    { initialValue: null }
+  );
 
-    // Find and destroy the old component if it exists
-    const existingComponentRef = this.mfeRegistry[remoteName].loadedComponent;
-    if (existingComponentRef) {
-      // FIX: Use destroy() to prevent memory leaks. It also automatically detaches the view.
-      existingComponentRef.destroy();
-      this.mfeRegistry[remoteName].loadedComponent = null;
-    }
-
-    this.mfeLoader.loadMfe(remoteName, channel).then(componentType => {
-      const componentRef = viewContainerRef.createComponent(componentType);
-      componentRef.instance.mfeId = remoteName;
-      this.mfeRegistry[remoteName].loadedComponent = componentRef;
-    }).catch(err => {
-      this.logger.error('Shell', `Failed to load remote ${remoteName}@${channel}. Reason: ${err.message}`);
-    });
+  isActive(remoteName: string, channel: 'stable' | 'canary'): boolean {
+    if (!this.currentRoute()) return false;
+    const url = (this.currentRoute() as NavigationEnd).urlAfterRedirects;
+    return url.includes(`/${remoteName}/${channel}`);
   }
 
   toggleHud() {
@@ -65,5 +53,15 @@ export class AppComponent implements AfterViewInit {
 
   exportAuditReport() {
     this.reportService.generatePdfReport();
+  }
+
+  login() {
+    this.authService.login({ name: 'agent-007', roles: ['admin'] });
+    this.router.navigate(['/']); // Navigate to default page after login
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/']); // Navigate away from protected routes
   }
 }

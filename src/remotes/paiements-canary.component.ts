@@ -1,12 +1,14 @@
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { MfeContract } from '../contracts/mfe.contracts';
 import { MfeBaseComponent } from './mfe.model';
+import { CnafButtonComponent } from '../shared-ui/cnaf-button/cnaf-button.component';
+import { EventBusService } from '../services/event-bus.service';
 
 @Component({
   selector: 'app-paiements-canary',
   standalone: true,
-  imports: [MfeBaseComponent],
+  imports: [MfeBaseComponent, CnafButtonComponent],
   template: `
     <app-mfe-base
       title="Gestion des Paiements"
@@ -22,12 +24,12 @@ import { MfeBaseComponent } from './mfe.model';
           Ceci est une version Canary. Des instabilités peuvent survenir.
         </div>
         <div class="flex space-x-2">
-            <button (click)="callApi('api.cnaf.fr/paiements/previsions')" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm">
+            <app-cnaf-button (click)="viewForecast()" variant="primary">
               Voir Prévisions
-            </button>
-             <button (click)="callApi('test.api.cnaf.fr/paiements/realtime')" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">
+            </app-cnaf-button>
+             <app-cnaf-button (click)="viewRealtime()" variant="secondary">
               API de test
-            </button>
+            </app-cnaf-button>
         </div>
       </div>
     </app-mfe-base>
@@ -35,6 +37,8 @@ import { MfeBaseComponent } from './mfe.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaiementsCanaryComponent {
+  private eventBus = inject(EventBusService);
+
   // FIX: Changed to static to allow inspection without instantiation.
   public static contract: MfeContract = {
     version: '2.2.0',
@@ -45,4 +49,16 @@ export class PaiementsCanaryComponent {
         'd3': '7.9.0'
     }
   };
+
+  viewForecast() {
+    this.eventBus.publish({
+      source: 'PaiementsCanary',
+      type: 'paiement.prevision@1',
+      payload: { nextPaymentDate: new Date().toISOString() }
+    });
+  }
+
+  viewRealtime() {
+    // This would call a test API endpoint
+  }
 }

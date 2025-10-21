@@ -10,10 +10,21 @@
       </div>
     </div>
     <div class="flex items-center space-x-4">
-      <button (click)="exportAuditReport()" class="flex items-center space-x-2 bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-md text-sm font-semibold hover:bg-gray-300 dark:hover:bg-gray-600">
-        <span class="material-symbols-outlined text-base">download_for_offline</span>
-        <span>Export Audit PDF</span>
-      </button>
+       <!-- Auth Controls -->
+       @if (authService.currentUser(); as user) {
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-medium">Welcome, {{ user.name }}</span>
+          <button (click)="logout()" class="flex items-center space-x-2 bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-md text-sm font-semibold hover:bg-gray-300 dark:hover:bg-gray-600">
+            <span class="material-symbols-outlined text-base">logout</span>
+            <span>Logout</span>
+          </button>
+        </div>
+      } @else {
+        <button (click)="login()" class="flex items-center space-x-2 bg-green-600 text-white px-3 py-2 rounded-md text-sm font-semibold hover:bg-green-700">
+          <span class="material-symbols-outlined text-base">login</span>
+          <span>Login</span>
+        </button>
+      }
       <button (click)="toggleHud()" class="flex items-center space-x-2 bg-cnaf-blue text-white px-3 py-2 rounded-md text-sm font-semibold hover:bg-blue-700">
         <span class="material-symbols-outlined text-base">space_dashboard</span>
         <span>{{ isHudVisible() ? 'Hide' : 'Show' }} HUD</span>
@@ -21,19 +32,56 @@
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="p-4 md:p-8">
-    <div class="max-w-7xl mx-auto">
-      <h2 class="text-2xl font-semibold mb-6 text-gray-700 dark:text-gray-200">Applications Métier</h2>
-      
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Remote Loader Host -->
-        <ng-template mfeHost></ng-template>
-      </div>
+  <!-- Main Content Layout -->
+  <div class="flex">
+    <!-- Navigation Sidebar -->
+    <nav class="w-64 bg-white dark:bg-gray-800 p-4 shadow-lg">
+      <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Applications</h2>
+      <ul class="space-y-2">
+        @for(remote of remotes(); track remote.name) {
+          <li>
+            <p class="font-bold text-gray-800 dark:text-gray-100">{{ remote.name | titlecase }}</p>
+            <ul class="pl-4 mt-1 space-y-1">
+              <li>
+                <a [routerLink]="['/', remote.name, 'stable']" [class.bg-cnaf-blue]="isActive(remote.name, 'stable')" [class.text-white]="isActive(remote.name, 'stable')" class="block px-3 py-1.5 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-gray-700">
+                  Stable
+                </a>
+              </li>
+              <li>
+                @if(remote.canaryAvailable) {
+                  <a [routerLink]="['/', remote.name, 'canary']" [class.bg-yellow-500]="isActive(remote.name, 'canary')" [class.text-black]="isActive(remote.name, 'canary')" class="block px-3 py-1.5 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-gray-700 relative">
+                    Canary
+                    <span class="absolute top-0 right-0 h-2 w-2 bg-yellow-400 rounded-full animate-pulse-fast"></span>
+                  </a>
+                } @else {
+                  <span class="block px-3 py-1.5 rounded-md text-sm text-gray-400 cursor-not-allowed">
+                    Canary (N/A)
+                  </span>
+                }
+              </li>
+            </ul>
+          </li>
+        }
+      </ul>
+    </nav>
 
-    </div>
-  </main>
-  
+    <!-- MFE Host Area -->
+    <main class="flex-1 p-4 md:p-8">
+      @if(authService.currentUser()) {
+        <!-- The router outlet is where the dynamically loaded MFE components will be displayed -->
+        <router-outlet></router-outlet>
+      } @else {
+        <div class="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-700 rounded-lg">
+           <div class="text-center">
+              <span class="material-symbols-outlined text-6xl text-gray-400">lock</span>
+              <p class="mt-4 text-xl font-semibold text-gray-600 dark:text-gray-300">Veuillez vous connecter</p>
+              <p class="text-gray-500">Pour accéder aux applications métier, veuillez vous authentifier via le bouton en haut à droite.</p>
+           </div>
+        </div>
+      }
+    </main>
+  </div>
+
   <!-- Governance HUD -->
   @if(isHudVisible()) {
     <app-hud class="fixed bottom-0 right-0 left-0 z-50"></app-hud>

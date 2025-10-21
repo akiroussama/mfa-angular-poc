@@ -16,6 +16,7 @@
     "@angular/core": "^20.3.0",
     "zone.js": "^0.15.1",
     "semver": "^7.7.3",
+    "@angular/router": "^20.3.6",
     "@angular/build": "^20.3.0",
     "@angular/cli": "^20.3.0",
     "@angular/compiler-cli": "^20.3.0",
